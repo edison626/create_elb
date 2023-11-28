@@ -79,7 +79,7 @@ func main() {
 
 	// 创建 Application Load Balancer
 	createLBOutput, err := svc.CreateLoadBalancer(&elbv2.CreateLoadBalancerInput{
-		Name:    aws.String(varElbBatchName + "webproxy_ElbTarget"),                                        //负载均衡名
+		Name:    aws.String(varElbBatchName + "webproxy-ElbTarget"),                                        //负载均衡名
 		Subnets: []*string{aws.String("subnet-02b0af7335b197cb8"), aws.String("subnet-0a7e140afbc1f8f9b")}, // 替换为您的子网 ID
 		SecurityGroups: []*string{
 			aws.String("sg-033a6552e3ffe1a48"), // 安全组
