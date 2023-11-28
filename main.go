@@ -3,18 +3,34 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-const (
-	ins1 = "i-052551681090e99b3"
-	ins2 = "i-009751b0ecd44df7b"
-)
+// const (
+// 	ins1 = "i-052551681090e99b3"
+// 	ins2 = "i-009751b0ecd44df7b"
+// 	varElb
+// 	varElbTarget
+// )
 
 func main() {
+
+	varIns1 := os.Getenv("Ins1")                 // webproxy 实例1
+	varIns2 := os.Getenv("Ins2")                 // webproxy 实例2
+	varElbBatchName := os.Getenv("ElbBatchName") // 负载均衡 和 目标组 前缀 如：b3-
+
+	fmt.Printf("varIns1 : %s\n", varIns1)
+	fmt.Printf("varIns2 : %s\n", varIns2)
+	fmt.Printf("varElbBatchName : %s\n", varElbBatchName)
+
+	if varIns1 == "" || varIns2 == "" || varElbBatchName == "" {
+		log.Fatalf("值不能为空")
+	}
+
 	// 初始化 AWS 会话
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("ap-east-1"), // 替换为您的 AWS 区域
@@ -28,9 +44,9 @@ func main() {
 
 	// 创建目标组
 	tgInput := &elbv2.CreateTargetGroupInput{
-		Name:       aws.String("b3-testEdison"),
-		Port:       aws.Int64(80),      // 指定端口
-		Protocol:   aws.String("HTTP"), // 指定协议
+		Name:       aws.String(varElbBatchName + "webproxyElb"), // 目标组名
+		Port:       aws.Int64(80),                               // 指定端口
+		Protocol:   aws.String("HTTP"),                          // 指定协议
 		VpcId:      aws.String("vpc-0cadb665c480c21d1"),
 		TargetType: aws.String("instance"),
 	}
@@ -41,17 +57,8 @@ func main() {
 	}
 	fmt.Printf("创建目标组成功: %s\n", *tgOutput.TargetGroups[0].TargetGroupArn)
 
-	// 实例名称数组
-	//instanceNames := []string{"b3-MyFirstInstanceTest1", "b3-MyFirstInstanceTest2"}
-
-	// 创建 EC2 服务客户端
-	//ec2svc := ec2.New(sess)
-
-	// 获取实例 ID
-	// 这里您需要根据实例名称获取实例 ID，具体实现根据您的需求来调整
-
 	// 假设您已获取到了实例 ID
-	instanceIDs := []string{ins1, ins2}
+	instanceIDs := []string{varIns1, varIns2}
 
 	// 向目标组注册实例
 	for _, instanceID := range instanceIDs {
@@ -72,7 +79,7 @@ func main() {
 
 	// 创建 Application Load Balancer
 	createLBOutput, err := svc.CreateLoadBalancer(&elbv2.CreateLoadBalancerInput{
-		Name:    aws.String("TestElbEdison"),
+		Name:    aws.String(varElbBatchName + "webproxy_ElbTarget"),                                        //负载均衡名
 		Subnets: []*string{aws.String("subnet-02b0af7335b197cb8"), aws.String("subnet-0a7e140afbc1f8f9b")}, // 替换为您的子网 ID
 		SecurityGroups: []*string{
 			aws.String("sg-033a6552e3ffe1a48"), // 安全组
